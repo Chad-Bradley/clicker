@@ -965,6 +965,7 @@ function startDraw() {
     checkAchievements();
     saveGame();
     renderAll();
+    renderDrawResult(results);
     showDrawModal(results);
 
     isOnCooldown = true;
@@ -994,6 +995,7 @@ function doMultiDraw() {
     checkAchievements();
     saveGame();
     renderAll();
+    renderDrawResult(allResults);
 
     const ssrCount = allResults.filter(r=>r.rarity==='SSR').length;
     showDrawModal(allResults, `🎲 10连结果（${allResults.length}张，${ssrCount}张SSR）`);
@@ -1039,6 +1041,30 @@ function showDrawModal(results, title) {
         </div>`;
     }).join('');
     overlay.classList.add('open');
+}
+
+// ---- Inline Draw Result ----
+function renderDrawResult(results) {
+    const el = document.getElementById('drawResult');
+    if (!results || results.length === 0) {
+        el.className = 'draw-result empty';
+        el.textContent = '🃏 点击上方卡牌开始抽卡';
+        return;
+    }
+    el.className = 'draw-result';
+    // 只显示最近一次抽卡结果（最多显示30张）
+    const show = results.slice(-30);
+    show.sort((a,b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity]);
+    el.innerHTML = show.map((r,i) => {
+        const extra = [];
+        if (r.decomposed) extra.push('data-decomposed');
+        if (r.guaranteed) extra.push('data-guaranteed');
+        const label = r.decomposed ? '💎' : r.rarity;
+        return `<div class="draw-card" data-rarity="${r.rarity}" style="animation-delay:${i*0.03}s" ${extra.join(' ')}>
+            <span>${r.cardKey}</span>
+            <span class="rarity-tag">${r.upgraded ? '⬆️' : label}</span>
+        </div>`;
+    }).join('');
 }
 
 // ---- Toast ----
