@@ -241,6 +241,67 @@
         .achieve-state.claimable:hover { background: rgba(247,201,72,0.3); }
         .achieve-state.locked { background: rgba(255,255,255,0.05); color: var(--text-dim); }
 
+        /* Settings Page */
+        .settings-section { margin-bottom: 20px; }
+        .settings-section h3 { font-size: 15px; color: var(--text-dim); margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+        .settings-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--panel); border-radius: 10px; border: 1px solid var(--border);
+            padding: 12px 16px; margin-bottom: 8px;
+        }
+        .settings-row .label { font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .settings-row .label .sub { font-size: 11px; color: var(--text-dim); }
+        .settings-btn {
+            padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border);
+            background: transparent; color: var(--text); font-size: 12px; cursor: pointer;
+            transition: background 0.15s;
+        }
+        .settings-btn:hover { background: rgba(255,255,255,0.06); }
+        .settings-btn.danger:hover { background: rgba(231,76,60,0.2); border-color: #e74c3c; color: #e74c3c; }
+        .settings-info { font-size: 12px; color: var(--text-dim); line-height: 1.8; padding: 0 4px; }
+
+        /* Achievement Popup */
+        .achieve-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1d2e, #2a1a3e);
+            border: 2px solid var(--accent); border-radius: 20px;
+            padding: 32px 28px 24px; text-align: center;
+            z-index: 1001; box-shadow: 0 0 60px rgba(247,201,72,0.2);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 340px; width: 90%;
+        }
+        .achieve-popup .big-icon { font-size: 56px; margin-bottom: 8px; }
+        .achieve-popup .title { font-size: 22px; font-weight: 700; margin-bottom: 4px; background: linear-gradient(90deg, #f7971e, #ffd200); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .achieve-popup .sub { font-size: 14px; color: var(--text-dim); margin-bottom: 4px; }
+        .achieve-popup .reward { font-size: 16px; color: var(--accent); font-weight: 600; margin-bottom: 16px; }
+        .achieve-popup .close-btn {
+            padding: 8px 28px; border-radius: 20px; border: none;
+            background: var(--accent); color: #1a1d2e; font-size: 14px;
+            font-weight: 600; cursor: pointer;
+        }
+        .achieve-popup .close-btn:hover { opacity: 0.9; }
+        @keyframes popIn {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .achieve-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px); z-index: 1000; display: none;
+        }
+        .achieve-overlay.open { display: block; }
+
+        /* NEW badge on album cards */
+        .album-card .new-badge {
+            position: absolute; top: -4px; left: -4px;
+            background: var(--accent); color: #1a1d2e;
+            font-size: 8px; font-weight: 700; padding: 1px 5px;
+            border-radius: 6px; animation: pulse 1s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
         /* Modal */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.6);
@@ -312,6 +373,7 @@
         <div class="tab" data-page="album">📖 卡册</div>
         <div class="tab" data-page="craft">🔧 合成</div>
         <div class="tab" data-page="achieve">🏆 成就</div>
+        <div class="tab" data-page="settings">⚙️ 设置</div>
     </div>
 
     <div class="content">
@@ -347,6 +409,37 @@
 
         <!-- Achievements Page -->
         <div class="page" id="page-achieve"><div class="achieve-list" id="achieveList"></div></div>
+
+        <!-- Settings Page -->
+        <div class="page" id="page-settings">
+            <div class="settings-section">
+                <h3>📊 游戏数据</h3>
+                <div class="settings-info" id="settingsStats"></div>
+            </div>
+            <div class="settings-section">
+                <h3>⚙️ 操作</h3>
+                <div class="settings-row">
+                    <span class="label">🔄 重新开始 <span class="sub">清空所有数据</span></span>
+                    <button class="settings-btn danger" id="resetBtn">重置</button>
+                </div>
+                <div class="settings-row">
+                    <span class="label">📥 导出存档 <span class="sub">复制到剪贴板</span></span>
+                    <button class="settings-btn" id="exportBtn">导出</button>
+                </div>
+                <div class="settings-row">
+                    <span class="label">📤 导入存档 <span class="sub">粘贴后导入</span></span>
+                    <button class="settings-btn" id="importBtn">导入</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>ℹ️ 关于</h3>
+                <div class="settings-info">
+                    抽卡合成器 v2.0 🚀<br>
+                    卡牌: 67种 ｜ 工具: 20种 ｜ 成就: 10个<br>
+                    数据自动保存在浏览器本地
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="footer">抽卡合成器 v2 🚀</div>
@@ -363,6 +456,16 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Achievement Popup -->
+<div class="achieve-overlay" id="achieveOverlay"></div>
+<div class="achieve-popup" id="achievePopup" style="display:none">
+    <div class="big-icon" id="achieveIcon">🏆</div>
+    <div class="title">成就达成！</div>
+    <div class="sub" id="achieveName">收集大师</div>
+    <div class="reward" id="achieveReward">奖励: 100💎</div>
+    <button class="close-btn" id="achieveClose">太棒了！</button>
+</div>
 
 <script>
 // ========================================================================
@@ -500,7 +603,7 @@ function defaultState() {
     return {
         cards: {}, tools: {}, shards: 0, totalDraws: 0, ssrCount: 0,
         totalShardUsed: 0, achieveClaimed: {}, pityCount: 0, ssrPityCount: 0,
-        autoDrawOn: false, permanentSSRBoost: 0,
+        autoDrawOn: false, permanentSSRBoost: 0, newCardKeys: [],
     };
 }
 let state = defaultState();
@@ -812,6 +915,19 @@ function exchangeShard() {
 //  ACHIEVEMENTS
 // ========================================================================
 
+function showAchievePopup(a) {
+    document.getElementById('achieveIcon').textContent = a.icon;
+    document.getElementById('achieveName').textContent = a.name;
+    document.getElementById('achieveReward').textContent = '奖励: ' + a.reward;
+    document.getElementById('achieveOverlay').classList.add('open');
+    document.getElementById('achievePopup').style.display = 'block';
+}
+
+function hideAchievePopup() {
+    document.getElementById('achieveOverlay').classList.remove('open');
+    document.getElementById('achievePopup').style.display = 'none';
+}
+
 function checkAchievements() {
     for (const a of ACHIEVEMENTS) {
         if (state.achieveClaimed[a.id]) continue;
@@ -828,7 +944,7 @@ function checkAchievements() {
                 state.permanentSSRBoost = (state.permanentSSRBoost||0)+1;
             }
             saveGame(); renderAll();
-            setTimeout(()=>showToast(`🏆 成就: ${a.name}！奖励: ${a.reward}`),300);
+            showAchievePopup(a);
         }
     }
 }
@@ -849,9 +965,10 @@ function loadGame() {
             state = {...defaultState(), ...s};
             state.cards = s.cards||{};
             state.tools = s.tools||{};
-            state.achieveClaimed = s.achieveClaimed||{};
-        }
-    } catch(e) { console.warn('读档失败',e); }
+        state.achieveClaimed = s.achieveClaimed||{};
+        state.newCardKeys = s.newCardKeys||[];
+    }
+} catch(e) { console.warn('读档失败',e); }
 }
 
 // ========================================================================
@@ -866,6 +983,7 @@ function renderAll() {
     renderAlbum();
     renderCraft();
     renderAchievements();
+    renderSettings();
     updateAutoBtn();
 }
 
@@ -900,8 +1018,10 @@ function renderAlbum() {
             <div class="album-grid">`;
         for (const c2 of cards) {
             const n = state.cards[c2.emoji]||0;
+            const isNew = n > 0 && state.newCardKeys?.includes(c2.emoji);
             h += `<div class="album-card" data-rarity="${r}" data-emoji="${c2.emoji}">
                 <button class="decompose-btn" data-decompose="${c2.emoji}" title="分解">✕</button>
+                ${isNew ? '<div class="new-badge">NEW</div>' : ''}
                 <div class="card-emoji">${c2.emoji}</div>
                 <div class="card-name">${c2.name}</div>
                 <div class="card-count">${n>0?'×'+n:'—'}</div>
@@ -981,6 +1101,59 @@ function renderAchievements() {
     c.innerHTML = h;
 }
 
+// ---- Settings ----
+function renderSettings() {
+    const totalCardsVal = cntTotal(state);
+    const uniqueCardsVal = cntUnique(state);
+    const toolsBuilt = TOOLS.filter(t=>(state.tools[t.id]||0)>0).length;
+    document.getElementById('settingsStats').innerHTML =
+        `📦 总卡牌: ${totalCardsVal} 张<br>` +
+        `📖 已收集: ${uniqueCardsVal} / ${ALL_CARD_KEYS.length} 种<br>` +
+        `🔧 已合成工具: ${toolsBuilt} / ${TOOLS.length} 种<br>` +
+        `🎴 总抽卡: ${state.totalDraws} 次<br>` +
+        `🌟 SSR获得: ${state.ssrCount||0} 次<br>` +
+        `💎 碎片: ${state.shards}`;
+}
+
+function resetGame() {
+    if (!confirm('⚠️ 确定要重新开始吗？所有进度将被清空！')) return;
+    localStorage.removeItem('cardgame2_save');
+    state = defaultState();
+    renderAll();
+    showToast('🔄 已重置所有数据');
+}
+
+function exportSave() {
+    const data = JSON.stringify(state);
+    navigator.clipboard.writeText(data).then(() => {
+        showToast('📥 存档已复制到剪贴板');
+    }).catch(() => {
+        // fallback
+        prompt('复制下面的存档数据：', data);
+    });
+}
+
+function importSave() {
+    const data = prompt('粘贴存档数据：');
+    if (!data) return;
+    try {
+        const parsed = JSON.parse(data);
+        // 基本验证
+        if (typeof parsed !== 'object' || !('cards' in parsed)) {
+            throw new Error('无效数据');
+        }
+        state = { ...defaultState(), ...parsed, newCardKeys: [] };
+        state.cards = parsed.cards || {};
+        state.tools = parsed.tools || {};
+        state.achieveClaimed = parsed.achieveClaimed || {};
+        saveGame();
+        renderAll();
+        showToast('📤 存档导入成功！');
+    } catch(e) {
+        showToast('❌ 导入失败：数据格式不正确');
+    }
+}
+
 // ========================================================================
 //  DRAW EXECUTION
 // ========================================================================
@@ -992,6 +1165,8 @@ function startDraw() {
     if (isOnCooldown) return;
     const cd = getBaseCooldown();
     const results = doDraw();
+    // 记录新抽到的卡（用于卡册"NEW"标记）
+    state.newCardKeys = results.filter(r=>!r.decomposed).map(r=>r.cardKey);
     checkAchievements();
     saveGame();
     renderAll();
@@ -1022,6 +1197,8 @@ function doMultiDraw() {
         const res = doDraw();
         allResults.push(...res);
     }
+    // 记录新抽到的卡
+    state.newCardKeys = allResults.filter(r=>!r.decomposed).map(r=>r.cardKey);
     checkAchievements();
     saveGame();
     renderAll();
@@ -1149,6 +1326,11 @@ function init() {
             if (currentPage !== 'draw' && state.autoDrawOn) {
                 stopAutoDraw();
             }
+            // 进入卡册时清除"NEW"标记
+            if (currentPage === 'album' && state.newCardKeys?.length > 0) {
+                state.newCardKeys = [];
+                renderAlbum();
+            }
         });
     });
 
@@ -1162,6 +1344,15 @@ function init() {
     document.getElementById('modalOverlay').addEventListener('click', e=>{
         if (e.target===e.currentTarget) document.getElementById('modalOverlay').classList.remove('open');
     });
+
+    // Settings
+    document.getElementById('resetBtn').addEventListener('click', resetGame);
+    document.getElementById('exportBtn').addEventListener('click', exportSave);
+    document.getElementById('importBtn').addEventListener('click', importSave);
+
+    // Achievement popup
+    document.getElementById('achieveClose').addEventListener('click', hideAchievePopup);
+    document.getElementById('achieveOverlay').addEventListener('click', hideAchievePopup);
 
     renderAll();
     // 自动恢复自动抽卡（如果之前开着）
