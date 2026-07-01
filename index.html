@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点击器小游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            width: 420px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 24px;
+        }
+
+        .score-section {
+            margin-bottom: 24px;
+        }
+
+        .count {
+            font-size: 56px;
+            font-weight: 700;
+            transition: transform 0.1s ease;
+        }
+
+        .count.pop {
+            transform: scale(1.15);
+        }
+
+        .count-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+        }
+
+        .click-area {
+            margin-bottom: 28px;
+        }
+
+        .click-btn {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 215, 0, 0.3);
+            background: radial-gradient(circle at 30% 30%, #ffd700, #f7971e);
+            cursor: pointer;
+            font-size: 60px;
+            transition: transform 0.08s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 32px rgba(247, 151, 30, 0.3);
+            color: #fff;
+            user-select: none;
+            position: relative;
+        }
+
+        .click-btn:hover {
+            box-shadow: 0 8px 40px rgba(247, 151, 30, 0.5);
+        }
+
+        .click-btn:active {
+            transform: scale(0.92);
+        }
+
+        .click-effect {
+            position: fixed;
+            pointer-events: none;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffd700;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(1.3);
+            }
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 24px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .shop {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+        }
+
+        .shop h2 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .upgrade {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        .upgrade-info {
+            text-align: left;
+        }
+
+        .upgrade-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .upgrade-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .upgrade-btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.2s;
+            min-width: 80px;
+        }
+
+        .upgrade-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .upgrade-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .upgrade-btn.maxed {
+            background: #2ecc71;
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .reset-btn {
+            margin-top: 16px;
+            padding: 8px 24px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .reset-btn:hover {
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .footer {
+            margin-top: 16px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 数字跳动动画 */
+        .count-bump {
+            animation: bump 0.12s ease;
+        }
+
+        @keyframes bump {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>✨ 点击器</h1>
+    <p class="subtitle">每点一下，离目标更近一步</p>
+
+    <div class="score-section">
+        <div class="count" id="countDisplay">0</div>
+        <div class="count-label">总点数</div>
+    </div>
+
+    <div class="click-area">
+        <button class="click-btn" id="clickBtn">👆</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="clickPowerDisplay">1</div>
+            <div class="stat-label">点击力</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="clickTotalDisplay">0</div>
+            <div class="stat-label">总点击</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="clickPerSecDisplay">0</div>
+            <div class="stat-label">每秒</div>
+        </div>
+    </div>
+
+    <div class="shop">
+        <h2>🏪 商店</h2>
+        <div class="upgrade" id="upgradeClick">
+            <div class="upgrade-info">
+                <div class="upgrade-name">🔨 强化点击</div>
+                <div class="upgrade-desc">点击力 +1</div>
+            </div>
+            <button class="upgrade-btn" id="upgradeClickBtn">10</button>
+        </div>
+        <div class="upgrade" id="upgradeAuto">
+            <div class="upgrade-info">
+                <div class="upgrade-name">🤖 自动点击器</div>
+                <div class="upgrade-desc">每秒自动 +1</div>
+            </div>
+            <button class="upgrade-btn" id="upgradeAutoBtn">50</button>
+        </div>
+    </div>
+
+    <button class="reset-btn" id="resetBtn">🔄 重新开始</button>
+    <div class="footer">GitHub Pages 小游戏 🚀</div>
+</div>
+
+<script>
+    // ===== 游戏数据 =====
+    let state = {
+        count: 0,           // 当前点数
+        clickPower: 1,      // 每次点击获得点数
+        autoLevel: 0,       // 自动点击器等级
+        clickCount: 0,      // 总点击次数
+        upgradeClickCost: 10,  // 点击力升级费用
+        upgradeAutoCost: 50,   // 自动点击器升级费用
+    };
+
+    const MAX_LEVEL = 50;
+
+    // ===== DOM 引用 =====
+    const countDisplay = document.getElementById('countDisplay');
+    const clickPowerDisplay = document.getElementById('clickPowerDisplay');
+    const clickTotalDisplay = document.getElementById('clickTotalDisplay');
+    const clickPerSecDisplay = document.getElementById('clickPerSecDisplay');
+    const clickBtn = document.getElementById('clickBtn');
+    const upgradeClickBtn = document.getElementById('upgradeClickBtn');
+    const upgradeAutoBtn = document.getElementById('upgradeAutoBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // ===== 工具函数 =====
+    function formatNum(n) {
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+        if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+        return Math.floor(n).toString();
+    }
+
+    // ===== 保存/加载 =====
+    function saveGame() {
+        localStorage.setItem('cliker_save', JSON.stringify(state));
+    }
+
+    function loadGame() {
+        try {
+            const raw = localStorage.getItem('cliker_save');
+            if (raw) {
+                const saved = JSON.parse(raw);
+                state = { ...state, ...saved };
+            }
+        } catch (e) {
+            console.warn('读取存档失败', e);
+        }
+    }
+
+    // ===== 更新 UI =====
+    function updateUI() {
+        countDisplay.textContent = formatNum(state.count);
+        clickPowerDisplay.textContent = state.clickPower;
+        clickTotalDisplay.textContent = state.clickCount;
+        clickPerSecDisplay.textContent = state.autoLevel;
+
+        // 点击力升级
+        if (state.clickPower >= MAX_LEVEL) {
+            upgradeClickBtn.textContent = '已满级';
+            upgradeClickBtn.className = 'upgrade-btn maxed';
+            upgradeClickBtn.disabled = true;
+        } else {
+            upgradeClickBtn.textContent = formatNum(state.upgradeClickCost);
+            upgradeClickBtn.className = 'upgrade-btn';
+            upgradeClickBtn.disabled = state.count < state.upgradeClickCost;
+        }
+
+        // 自动点击器升级
+        if (state.autoLevel >= MAX_LEVEL) {
+            upgradeAutoBtn.textContent = '已满级';
+            upgradeAutoBtn.className = 'upgrade-btn maxed';
+            upgradeAutoBtn.disabled = true;
+        } else {
+            upgradeAutoBtn.textContent = formatNum(state.upgradeAutoCost);
+            upgradeAutoBtn.className = 'upgrade-btn';
+            upgradeAutoBtn.disabled = state.count < state.upgradeAutoCost;
+        }
+    }
+
+    // ===== 点击效果 =====
+    function spawnClickEffect(x, y, text) {
+        const el = document.createElement('div');
+        el.className = 'click-effect';
+        el.textContent = '+' + text;
+        el.style.left = (x - 15) + 'px';
+        el.style.top = (y - 10) + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 800);
+    }
+
+    // ===== 主要操作 =====
+    function doClick(e) {
+        state.count += state.clickPower;
+        state.clickCount++;
+
+        // 数字弹跳
+        countDisplay.classList.remove('count-bump');
+        void countDisplay.offsetWidth; // 强制回流以重启动画
+        countDisplay.classList.add('count-bump');
+
+        // 弹出特效
+        const rect = clickBtn.getBoundingClientRect();
+        spawnClickEffect(
+            rect.left + rect.width / 2,
+            rect.top,
+            state.clickPower
+        );
+
+        updateUI();
+        saveGame();
+    }
+
+    // ===== 升级逻辑 =====
+    function buyUpgradeClick() {
+        if (state.count < state.upgradeClickCost || state.clickPower >= MAX_LEVEL) return;
+        state.count -= state.upgradeClickCost;
+        state.clickPower++;
+        state.upgradeClickCost = Math.floor(10 * Math.pow(1.5, state.clickPower - 1));
+        updateUI();
+        saveGame();
+    }
+
+    function buyUpgradeAuto() {
+        if (state.count < state.upgradeAutoCost || state.autoLevel >= MAX_LEVEL) return;
+        state.count -= state.upgradeAutoCost;
+        state.autoLevel++;
+        state.upgradeAutoCost = Math.floor(50 * Math.pow(1.6, state.autoLevel - 1));
+        updateUI();
+        saveGame();
+    }
+
+    // ===== 重置 =====
+    function resetGame() {
+        if (!confirm('确定要重新开始吗？所有进度将丢失！')) return;
+        state = {
+            count: 0,
+            clickPower: 1,
+            autoLevel: 0,
+            clickCount: 0,
+            upgradeClickCost: 10,
+            upgradeAutoCost: 50,
+        };
+        updateUI();
+        saveGame();
+    }
+
+    // ===== 自动点击器循环 =====
+    function autoClickLoop() {
+        if (state.autoLevel > 0) {
+            state.count += state.autoLevel;
+            countDisplay.classList.remove('count-bump');
+            void countDisplay.offsetWidth;
+            countDisplay.classList.add('count-bump');
+            updateUI();
+            saveGame();
+        }
+    }
+
+    // ===== 绑定事件 =====
+    clickBtn.addEventListener('click', doClick);
+    upgradeClickBtn.addEventListener('click', buyUpgradeClick);
+    upgradeAutoBtn.addEventListener('click', buyUpgradeAuto);
+    resetBtn.addEventListener('click', resetGame);
+
+    // 每秒触发自动点击器
+    setInterval(autoClickLoop, 1000);
+
+    // ===== 启动游戏 =====
+    loadGame();
+    updateUI();
+</script>
+
+</body>
+</html>
