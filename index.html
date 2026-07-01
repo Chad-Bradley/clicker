@@ -3,460 +3,1116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>点击器小游戏</title>
+    <title>🎴 抽卡合成器</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0d1a;
+            --panel: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --text: #e8e8f0;
+            --text-dim: rgba(255,255,255,0.4);
+            --accent: #f7c948;
+            --n-color: #8fafc0;
+            --r-color: #5bc77e;
+            --sr-color: #a078e0;
+            --ssr-color: #f0a030;
+            --shard-color: #7dd3fc;
+            --auto-color: #ff6b9d;
         }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: #fff;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        .app { width: 100%; max-width: 440px; display: flex; flex-direction: column; min-height: 100dvh; }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+        }
+        .top-bar .title { font-size: 18px; font-weight: 700; }
+        .top-bar .stats { display: flex; gap: 8px; font-size: 12px; flex-wrap: wrap; justify-content: flex-end; }
+        .top-bar .stat-item {
+            display: flex; align-items: center; gap: 3px;
+            background: var(--panel); padding: 3px 8px; border-radius: 16px;
         }
 
-        .game-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 40px;
-            width: 420px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
+        .tab {
+            flex: 1; min-width: 60px; padding: 10px 0; text-align: center;
+            font-size: 12px; cursor: pointer; color: var(--text-dim);
+            transition: color 0.15s, border-color 0.15s;
+            border-bottom: 2px solid transparent; user-select: none; white-space: nowrap;
         }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-            background: linear-gradient(90deg, #f7971e, #ffd200);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* Content */
+        .content { flex: 1; overflow-y: auto; padding: 16px; }
+        .content::-webkit-scrollbar { width: 4px; }
+        .content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Draw Page */
+        .draw-area { display: flex; flex-direction: column; align-items: center; padding: 16px 0 12px; }
+        .draw-btn {
+            width: 160px; height: 160px; border-radius: 50%;
+            border: 4px solid rgba(247,201,72,0.25);
+            background: radial-gradient(circle at 35% 30%, #2a2540, #141824);
+            cursor: pointer; font-size: 64px;
+            transition: transform 0.08s, box-shadow 0.2s;
+            box-shadow: 0 0 40px rgba(247,201,72,0.08), inset 0 0 40px rgba(247,201,72,0.03);
+            user-select: none; color: #fff; position: relative;
         }
-
-        .subtitle {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 24px;
+        .draw-btn:not(:disabled):hover { box-shadow: 0 0 60px rgba(247,201,72,0.15), inset 0 0 40px rgba(247,201,72,0.05); }
+        .draw-btn:not(:disabled):active { transform: scale(0.93); }
+        .draw-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .draw-btn .cooldown-overlay {
+            position: absolute; inset: 0; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.6); font-size: 20px; font-weight: 700;
+            opacity: 0; transition: opacity 0.2s;
         }
+        .draw-btn:disabled .cooldown-overlay { opacity: 1; }
 
-        .score-section {
-            margin-bottom: 24px;
-        }
+        .draw-info { margin-top: 10px; font-size: 13px; color: var(--text-dim); text-align: center; }
 
-        .count {
-            font-size: 56px;
-            font-weight: 700;
-            transition: transform 0.1s ease;
-        }
-
-        .count.pop {
-            transform: scale(1.15);
-        }
-
-        .count-label {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 4px;
-        }
-
-        .click-area {
-            margin-bottom: 28px;
-        }
-
-        .click-btn {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            border: 4px solid rgba(255, 215, 0, 0.3);
-            background: radial-gradient(circle at 30% 30%, #ffd700, #f7971e);
-            cursor: pointer;
-            font-size: 60px;
-            transition: transform 0.08s ease, box-shadow 0.2s ease;
-            box-shadow: 0 8px 32px rgba(247, 151, 30, 0.3);
-            color: #fff;
-            user-select: none;
-            position: relative;
-        }
-
-        .click-btn:hover {
-            box-shadow: 0 8px 40px rgba(247, 151, 30, 0.5);
-        }
-
-        .click-btn:active {
-            transform: scale(0.92);
-        }
-
-        .click-effect {
-            position: fixed;
-            pointer-events: none;
-            font-size: 20px;
-            font-weight: 700;
-            color: #ffd700;
-            animation: floatUp 0.8s ease-out forwards;
-            z-index: 100;
-        }
-
-        @keyframes floatUp {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-80px) scale(1.3);
-            }
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 24px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .shop {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding-top: 20px;
-        }
-
-        .shop h2 {
-            font-size: 16px;
-            margin-bottom: 12px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .upgrade {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 10px;
+        .draw-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+        .draw-action-btn {
+            padding: 7px 18px; border-radius: 18px; border: 1px solid var(--border);
+            background: var(--panel); color: var(--text); font-size: 13px; cursor: pointer;
             transition: background 0.2s;
         }
-
-        .upgrade-info {
-            text-align: left;
+        .draw-action-btn:hover { background: rgba(255,255,255,0.08); }
+        .draw-action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .draw-action-btn.active-auto {
+            background: rgba(255,107,157,0.2); border-color: var(--auto-color); color: var(--auto-color);
         }
 
-        .upgrade-name {
-            font-size: 14px;
-            font-weight: 600;
+        /* Draw Result */
+        .draw-result {
+            margin-top: 12px; min-height: 70px;
+            display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center;
+            padding: 10px; background: var(--panel); border-radius: 14px; border: 1px solid var(--border);
+        }
+        .draw-result.empty { color: var(--text-dim); font-size: 13px; }
+        .draw-card {
+            width: 48px; height: 58px; border-radius: 9px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 24px; border: 2px solid var(--border);
+            background: var(--panel); animation: cardIn 0.3s ease-out backwards; position: relative;
+        }
+        .draw-card .rarity-tag { font-size: 8px; margin-top: 1px; font-weight: 600; }
+        .draw-card[data-rarity="N"]  { border-color: var(--n-color); }
+        .draw-card[data-rarity="N"] .rarity-tag { color: var(--n-color); }
+        .draw-card[data-rarity="R"]  { border-color: var(--r-color); }
+        .draw-card[data-rarity="R"] .rarity-tag { color: var(--r-color); }
+        .draw-card[data-rarity="SR"] { border-color: var(--sr-color); }
+        .draw-card[data-rarity="SR"] .rarity-tag { color: var(--sr-color); }
+        .draw-card[data-rarity="SSR"] {
+            border-color: var(--ssr-color); box-shadow: 0 0 14px rgba(240,160,48,0.2);
+        }
+        .draw-card[data-rarity="SSR"] .rarity-tag { color: var(--ssr-color); }
+        .draw-card[data-decomposed] { border-color: var(--shard-color); opacity: 0.7; }
+        .draw-card[data-guaranteed]::after {
+            content: '🛡️'; position: absolute; top: -6px; right: -6px; font-size: 12px;
         }
 
-        .upgrade-desc {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
+        @keyframes cardIn {
+            0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        .upgrade-btn {
-            padding: 8px 20px;
-            border-radius: 8px;
-            border: none;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: transform 0.15s, opacity 0.2s;
-            min-width: 80px;
+        /* Album Page */
+        .album-group { margin-bottom: 16px; }
+        .album-group-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; padding: 0 4px; }
+        .album-group-title .tag {
+            display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10px; margin-left: 6px;
         }
-
-        .upgrade-btn:hover:not(:disabled) {
-            transform: scale(1.05);
+        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
+        .album-card {
+            background: var(--panel); border-radius: 9px; border: 1px solid var(--border);
+            padding: 6px 2px 4px; text-align: center; cursor: pointer;
+            transition: background 0.15s; position: relative;
         }
-
-        .upgrade-btn:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-            transform: none;
+        .album-card:hover { background: rgba(255,255,255,0.07); }
+        .album-card .card-emoji { font-size: 24px; line-height: 1.2; }
+        .album-card .card-name { font-size: 10px; color: var(--text-dim); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .album-card .card-count { font-size: 11px; font-weight: 600; margin-top: 1px; }
+        .album-card[data-rarity="N"]  .card-count { color: var(--n-color); }
+        .album-card[data-rarity="R"]  .card-count { color: var(--r-color); }
+        .album-card[data-rarity="SR"] .card-count { color: var(--sr-color); }
+        .album-card[data-rarity="SSR"] .card-count { color: var(--ssr-color); }
+        .album-card .decompose-btn {
+            position: absolute; top: -4px; right: -4px; width: 18px; height: 18px;
+            border-radius: 50%; border: none; background: rgba(255,80,80,0.85);
+            color: #fff; font-size: 10px; cursor: pointer; display: none;
+            align-items: center; justify-content: center; line-height: 1;
         }
+        .album-card:hover .decompose-btn { display: flex; }
+        .album-card .decompose-btn:hover { background: #e04040; }
 
-        .upgrade-btn.maxed {
-            background: #2ecc71;
-            cursor: default;
-            opacity: 0.7;
+        /* Craft Page */
+        .shard-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; background: var(--panel); border-radius: 12px;
+            border: 1px solid var(--border); margin-bottom: 14px; flex-wrap: wrap;
         }
-
-        .reset-btn {
-            margin-top: 16px;
-            padding: 8px 24px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: transparent;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 13px;
-            cursor: pointer;
-            transition: color 0.2s, border-color 0.2s;
+        .shard-bar .shard-icon { font-size: 18px; }
+        .shard-bar .shard-count { font-weight: 700; font-size: 15px; color: var(--shard-color); }
+        .shard-bar .shard-label { font-size: 12px; color: var(--text-dim); }
+        .shard-bar .shard-btn {
+            margin-left: auto; padding: 4px 10px; border-radius: 8px;
+            border: 1px solid var(--border); background: transparent; color: var(--text);
+            font-size: 11px; cursor: pointer;
         }
+        .shard-bar .shard-btn:hover { background: rgba(255,255,255,0.06); }
 
-        .reset-btn:hover {
-            color: #e74c3c;
-            border-color: #e74c3c;
+        .tool-list { display: flex; flex-direction: column; gap: 10px; }
+        .tool-item {
+            background: var(--panel); border-radius: 12px; border: 1px solid var(--border);
+            padding: 12px 14px;
         }
-
-        .footer {
-            margin-top: 16px;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.2);
+        .tool-header { display: flex; align-items: center; gap: 10px; }
+        .tool-icon { font-size: 24px; }
+        .tool-meta { flex: 1; min-width: 0; }
+        .tool-name { font-size: 14px; font-weight: 600; }
+        .tool-level { font-size: 11px; color: var(--text-dim); }
+        .tool-effect { font-size: 11px; color: var(--accent); margin-top: 1px; }
+        .tool-body { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .tool-cost { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; line-height: 1.6; }
+        .tool-cost .cost-item { display: inline-block; margin: 1px 4px 1px 0; }
+        .tool-cost .cost-item .enough { color: #5bc77e; }
+        .tool-cost .cost-item .lack   { color: #e05858; }
+        .tool-craft-btn {
+            padding: 5px 18px; border-radius: 8px; border: none; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: transform 0.15s, opacity 0.2s;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
         }
+        .tool-craft-btn:hover:not(:disabled) { transform: scale(1.04); }
+        .tool-craft-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .tool-craft-btn.maxed { background: #2ecc71; cursor: default; opacity: 0.7; }
 
-        /* 数字跳动动画 */
-        .count-bump {
-            animation: bump 0.12s ease;
+        /* Achievements */
+        .achieve-list { display: flex; flex-direction: column; gap: 8px; }
+        .achieve-item {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--panel); border-radius: 10px; border: 1px solid var(--border);
+            padding: 10px 12px;
         }
+        .achieve-icon { font-size: 22px; }
+        .achieve-info { flex: 1; min-width: 0; }
+        .achieve-name { font-size: 13px; font-weight: 600; }
+        .achieve-desc { font-size: 11px; color: var(--text-dim); }
+        .achieve-state {
+            font-size: 10px; padding: 3px 10px; border-radius: 16px; flex-shrink: 0;
+        }
+        .achieve-state.done { background: rgba(46,204,113,0.2); color: #2ecc71; }
+        .achieve-state.claimable { background: rgba(247,201,72,0.2); color: var(--accent); cursor: pointer; }
+        .achieve-state.claimable:hover { background: rgba(247,201,72,0.3); }
+        .achieve-state.locked { background: rgba(255,255,255,0.05); color: var(--text-dim); }
 
-        @keyframes bump {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.12); }
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px); display: none; justify-content: center;
+            align-items: center; z-index: 999;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #1a1d2e; border: 1px solid var(--border); border-radius: 18px;
+            padding: 20px; max-width: 340px; width: 90%; text-align: center;
+            animation: modalIn 0.25s ease-out; max-height: 80vh; overflow-y: auto;
+        }
+        @keyframes modalIn {
+            0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+        .modal-sub  { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+        .modal-cards { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 14px; }
+        .modal-close {
+            padding: 7px 24px; border-radius: 18px; border: 1px solid var(--border);
+            background: var(--panel); color: var(--text); font-size: 13px; cursor: pointer;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.08); }
+
+        .footer { text-align: center; padding: 8px; font-size: 11px; color: var(--text-dim); border-top: 1px solid var(--border); flex-shrink: 0; }
+
+        .toast {
+            position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            padding: 8px 20px; border-radius: 18px; font-size: 13px;
+            z-index: 1000; pointer-events: none; opacity: 0;
+            transition: opacity 0.3s; border: 1px solid var(--border); white-space: nowrap;
+        }
+        .toast.show { opacity: 1; }
+
+        @media (max-width: 440px) {
+            .draw-btn { width: 140px; height: 140px; font-size: 54px; }
+            .top-bar .stats { gap: 4px; }
+            .top-bar .stat-item { font-size: 10px; padding: 2px 6px; }
+            .album-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
+            .tab { font-size: 11px; min-width: 50px; }
         }
     </style>
 </head>
 <body>
 
-<div class="game-container">
-    <h1>✨ 点击器</h1>
-    <p class="subtitle">每点一下，离目标更近一步</p>
-
-    <div class="score-section">
-        <div class="count" id="countDisplay">0</div>
-        <div class="count-label">总点数</div>
-    </div>
-
-    <div class="click-area">
-        <button class="click-btn" id="clickBtn">👆</button>
-    </div>
-
-    <div class="stats">
-        <div class="stat-item">
-            <div class="stat-value" id="clickPowerDisplay">1</div>
-            <div class="stat-label">点击力</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value" id="clickTotalDisplay">0</div>
-            <div class="stat-label">总点击</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-value" id="clickPerSecDisplay">0</div>
-            <div class="stat-label">每秒</div>
+<div class="app">
+    <div class="top-bar">
+        <div class="title">🎴 抽卡合成器</div>
+        <div class="stats">
+            <div class="stat-item">💎 <span id="shardTop">0</span></div>
+            <div class="stat-item">📦 <span id="cardTotalTop">0</span></div>
+            <div class="stat-item">🎴 <span id="drawCountTop">0</span></div>
         </div>
     </div>
 
-    <div class="shop">
-        <h2>🏪 商店</h2>
-        <div class="upgrade" id="upgradeClick">
-            <div class="upgrade-info">
-                <div class="upgrade-name">🔨 强化点击</div>
-                <div class="upgrade-desc">点击力 +1</div>
+    <div class="tabs">
+        <div class="tab active" data-page="draw">🎴 抽卡</div>
+        <div class="tab" data-page="album">📖 卡册</div>
+        <div class="tab" data-page="craft">🔧 合成</div>
+        <div class="tab" data-page="achieve">🏆 成就</div>
+    </div>
+
+    <div class="content">
+        <!-- Draw Page -->
+        <div class="page active" id="page-draw">
+            <div class="draw-area">
+                <button class="draw-btn" id="drawBtn">
+                    🎴
+                    <div class="cooldown-overlay" id="cooldownOverlay"></div>
+                </button>
+                <div class="draw-info" id="drawInfo">点击抽卡 · 冷却 <span id="cooldownDisplay">0.5</span>s</div>
+                <div class="draw-actions">
+                    <button class="draw-action-btn" id="multiDrawBtn">🎲 10连</button>
+                    <button class="draw-action-btn" id="autoDrawBtn" style="display:none">▶ 自动</button>
+                </div>
             </div>
-            <button class="upgrade-btn" id="upgradeClickBtn">10</button>
+            <div class="draw-result empty" id="drawResult">🃏 点击上方卡牌开始抽卡</div>
         </div>
-        <div class="upgrade" id="upgradeAuto">
-            <div class="upgrade-info">
-                <div class="upgrade-name">🤖 自动点击器</div>
-                <div class="upgrade-desc">每秒自动 +1</div>
+
+        <!-- Album Page -->
+        <div class="page" id="page-album"><div id="albumContainer"></div></div>
+
+        <!-- Craft Page -->
+        <div class="page" id="page-craft">
+            <div class="shard-bar">
+                <span class="shard-icon">💎</span>
+                <span class="shard-count" id="shardDisplay">0</span>
+                <span class="shard-label">碎片</span>
+                <button class="shard-btn" id="exchangeBtn">兑换R卡</button>
             </div>
-            <button class="upgrade-btn" id="upgradeAutoBtn">50</button>
+            <div class="tool-list" id="toolList"></div>
         </div>
+
+        <!-- Achievements Page -->
+        <div class="page" id="page-achieve"><div class="achieve-list" id="achieveList"></div></div>
     </div>
 
-    <button class="reset-btn" id="resetBtn">🔄 重新开始</button>
-    <div class="footer">GitHub Pages 小游戏 🚀</div>
+    <div class="footer">抽卡合成器 v2 🚀</div>
 </div>
 
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-title" id="modalTitle">🎉 抽卡结果</div>
+        <div class="modal-sub" id="modalSub"></div>
+        <div class="modal-cards" id="modalCards"></div>
+        <button class="modal-close" id="modalClose">好的</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-    // ===== 游戏数据 =====
-    let state = {
-        count: 0,           // 当前点数
-        clickPower: 1,      // 每次点击获得点数
-        autoLevel: 0,       // 自动点击器等级
-        clickCount: 0,      // 总点击次数
-        upgradeClickCost: 10,  // 点击力升级费用
-        upgradeAutoCost: 50,   // 自动点击器升级费用
+// ========================================================================
+//  DATA
+// ========================================================================
+
+const RARITIES = ['N', 'R', 'SR', 'SSR'];
+const RARITY_LABEL = { N: '普通', R: '稀有', SR: '史诗', SSR: '传说' };
+const RARITY_ORDER = { N: 0, R: 1, SR: 2, SSR: 3 };
+const RARITY_COLORS = { N: '#8fafc0', R: '#5bc77e', SR: '#a078e0', SSR: '#f0a030' };
+
+// ---- Cards ----
+const CARDS = {
+    N: [
+        { emoji: '🐱', name: '猫咪' },    { emoji: '🐶', name: '小狗' },
+        { emoji: '🐰', name: '兔子' },    { emoji: '🐼', name: '熊猫' },
+        { emoji: '🦊', name: '狐狸' },    { emoji: '🐸', name: '青蛙' },
+        { emoji: '🐵', name: '猴子' },    { emoji: '🐷', name: '小猪' },
+        { emoji: '🐣', name: '小鸡' },    { emoji: '🐝', name: '蜜蜂' },
+        { emoji: '🐢', name: '乌龟' },    { emoji: '🐙', name: '章鱼' },
+        { emoji: '🐬', name: '海豚' },    { emoji: '🐿️', name: '松鼠' },
+        { emoji: '🦥', name: '树懒' },    { emoji: '🦦', name: '水獭' },
+        { emoji: '🦔', name: '刺猬' },    { emoji: '🐧', name: '企鹅' },
+        { emoji: '🐳', name: '鲸鱼' },    { emoji: '🐊', name: '鳄鱼' },
+        { emoji: '🦚', name: '孔雀' },    { emoji: '🐫', name: '骆驼' },
+        { emoji: '🐘', name: '大象' },    { emoji: '🦎', name: '蜥蜴' },
+        { emoji: '🐌', name: '蜗牛' },    { emoji: '🐞', name: '瓢虫' },
+        { emoji: '🦋', name: '蝴蝶' },    { emoji: '🦀', name: '螃蟹' },
+        { emoji: '🦗', name: '蟋蟀' },    { emoji: '🦢', name: '天鹅' },
+        { emoji: '🦏', name: '犀牛' },    { emoji: '🦣', name: '猛犸' },
+        { emoji: '🐻', name: '棕熊' },    { emoji: '🐨', name: '考拉' },
+        { emoji: '🦉', name: '猫头鹰' },  { emoji: '🐀', name: '老鼠' },
+        { emoji: '🐈', name: '黑猫' },    { emoji: '🐕', name: '柴犬' },
+    ],
+    R: [
+        { emoji: '🦄', name: '独角兽' },  { emoji: '🦅', name: '雄鹰' },
+        { emoji: '🐉', name: '神龙' },    { emoji: '🐋', name: '巨鲸' },
+        { emoji: '🦈', name: '鲨鱼' },    { emoji: '🦜', name: '鹦鹉' },
+        { emoji: '🦌', name: '灵鹿' },    { emoji: '🐆', name: '猎豹' },
+        { emoji: '🦁', name: '雄狮' },    { emoji: '🐅', name: '猛虎' },
+        { emoji: '🦩', name: '火烈鸟' },  { emoji: '🦭', name: '海豹' },
+        { emoji: '🐺', name: '灰狼' },    { emoji: '🐃', name: '野牛' },
+        { emoji: '🦒', name: '长颈鹿' },
+    ],
+    SR: [
+        { emoji: '🧙', name: '法师' },    { emoji: '🧝', name: '精灵' },
+        { emoji: '🦸', name: '英雄' },    { emoji: '🧛', name: '吸血鬼' },
+        { emoji: '🦹', name: '暗影' },    { emoji: '🧜', name: '人鱼' },
+        { emoji: '🧚', name: '仙子' },    { emoji: '🏹', name: '射手' },
+        { emoji: '⚔️', name: '剑士' },   { emoji: '🛡️', name: '圣盾' },
+        { emoji: '🌪️', name: '风暴' },   { emoji: '❄️', name: '冰霜' },
+        { emoji: '🌿', name: '自然' },    { emoji: '⚡', name: '雷霆' },
+    ],
+    SSR: [
+        { emoji: '👑', name: '王者' },    { emoji: '🌟', name: '星辰' },
+        { emoji: '🔥', name: '烈焰' },    { emoji: '💎', name: '宝石' },
+        { emoji: '🎆', name: '烟火' },    { emoji: '🌈', name: '彩虹' },
+        { emoji: '🗡️', name: '神剑' },   { emoji: '🪐', name: '星环' },
+        { emoji: '🕯️', name: '圣光' },   { emoji: '⚖️', name: '天秤' },
+        { emoji: '🌀', name: '极光' },    { emoji: '🌌', name: '银河' },
+    ],
+};
+
+// Build lookup
+const CARD_MAP = {};
+for (const r of RARITIES) for (const c of CARDS[r]) CARD_MAP[c.emoji] = { ...c, rarity: r };
+function getRarity(k) { return CARD_MAP[k].rarity; }
+function getCardName(k) { return CARD_MAP[k].name; }
+
+// ---- Tools (20) ----
+const TOOLS = [
+    { id: 'wand',       emoji: '🪄',  name: '魔法棒',     desc: '抽卡额外张数',
+      effect: l => `+${l} 张`,        recipe: { '🐱':3,'🐶':3,'🦄':1 } },
+    { id: 'lens',       emoji: '🔍',  name: '幸运透镜',   desc: 'SSR概率提升',
+      effect: l => `SSR +${l}%`,      recipe: { '🐰':3,'🐸':3,'🦅':1 } },
+    { id: 'hourglass',  emoji: '⏳',  name: '时光沙漏',   desc: '缩短冷却',
+      effect: l => `-${(l*.05).toFixed(2)}s`, recipe: { '🦊':3,'🐵':3,'🐉':1 } },
+    { id: 'scroll',     emoji: '🌊',  name: '潮汐卷轴',   desc: 'N卡自动分解',
+      effect: l => `${l*10}%分解`,    recipe: { '🐳':3,'🐊':3,'👑':1 } },
+    { id: 'amulet',     emoji: '🛡️', name: '守护符',     desc: '保底SR以上',
+      effect: l => `每${Math.max(1,11-l)}抽`, recipe: { '🐧':3,'🐝':3,'🦸':1 } },
+    { id: 'auto_draw',  emoji: '🤖',  name: '自动抽卡器', desc: '自动连续抽卡',
+      effect: l => `间隔 ×${(Math.pow(.8,l)).toFixed(2)}`, recipe: { '🐷':3,'🐣':3,'🦁':1 } },
+    { id: 'precise',    emoji: '🎯',  name: '精准之眼',   desc: 'SR以上概率提升',
+      effect: l => `SR+ +${l*2}%`,   recipe: { '🐼':3,'🐢':3,'🐆':1 } },
+    { id: 'magnet',     emoji: '🧲',  name: '磁吸卡牌',   desc: '概率额外获得已有卡',
+      effect: l => `${l*5}%触发`,    recipe: { '🐬':3,'🐿️':3,'🦜':1 } },
+    { id: 'dice',       emoji: '🎲',  name: '命运骰子',   desc: '抽卡结果概率翻倍',
+      effect: l => `${l*5}%翻倍`,    recipe: { '🦥':3,'🦦':3,'🦩':1 } },
+    { id: 'rainbow',    emoji: '🌈',  name: '彩虹桥',     desc: 'N卡概率升级为R',
+      effect: l => `${l*3}%升级`,    recipe: { '🦔':3,'🐌':3,'🦌':1 } },
+    { id: 'sieve',      emoji: '💎',  name: '钻石筛',     desc: '碎片获取量增加',
+      effect: l => `+${l*20}%碎片`,  recipe: { '🦚':3,'🐫':3,'🌟':1 } },
+    { id: 'recycle',    emoji: '♻️',  name: '转化炉',     desc: '分解概率返还卡牌',
+      effect: l => `${l*5}%返还`,    recipe: { '🐘':3,'🦎':3,'🐺':1 } },
+    { id: 'alchemy',    emoji: '🔬',  name: '炼金术',     desc: '碎片兑换消耗减少',
+      effect: l => `-${l}💎`,        recipe: { '🐞':3,'🦋':3,'🧝':1 } },
+    { id: 'copy',       emoji: '📦',  name: '复制之书',   desc: '合成概率不耗材',
+      effect: l => `${l*3}%省材`,    recipe: { '🐜':3,'🦀':3,'🧛':1 } },
+    { id: 'tree',       emoji: '🌱',  name: '知识古树',   desc: '每10秒自动得碎片',
+      effect: l => `+${l}💎/10s`,    recipe: { '🦗':3,'🦢':3,'💎':1 } },
+    { id: 'star',       emoji: '⭐',  name: '星光收集',   desc: '每次抽卡得碎片',
+      effect: l => `+${l}💎/抽`,     recipe: { '🦏':3,'🦣':3,'🧚':1 } },
+    { id: 'lucky_star', emoji: '💫',  name: '幸运星',     desc: '保底SSR',
+      effect: l => `每${30-l*2}抽保底SSR`, recipe: { '🐻':3,'🐨':3,'🏹':1 } },
+    { id: 'resonate',   emoji: '🎵',  name: '共鸣水晶',   desc: '集齐全套N卡奖励',
+      effect: l => `+${l*20}💎`,     recipe: { '🦉':3,'🐀':3,'⚔️':1 } },
+    { id: 'map',        emoji: '🗺️',  name: '冒险地图',   desc: '升级工具后免费抽卡',
+      effect: l => `免费${l*2}张`,   recipe: { '🐈':3,'🐕':3,'🛡️':1 } },
+    { id: 'champion',   emoji: '🏆',  name: '冠军徽章',   desc: '每100抽奖励碎片',
+      effect: l => `+${l*10}💎/百抽`, recipe: { '🐣':3,'🦋':3,'❄️':1 } },
+];
+const MAX_TOOL_LVL = 10;
+const TOOL_COST_MULT = 1.6;
+
+// ---- Achievements ----
+const ACHIEVEMENTS = [
+    { id: 'first_draw',  icon: '🎴', name: '初来乍到',      desc: '抽卡10次',          check: s => s.totalDraws >= 10,             reward: '50💎' },
+    { id: 'collector',   icon: '📖', name: '小小收藏家',    desc: '拥有20种不同卡牌',   check: s => cntUnique(s) >= 20,             reward: '100💎' },
+    { id: 'full_n',      icon: '🐱', name: '动物学家',      desc: '集齐所有N卡',       check: s => isSetComplete(s,'N'),            reward: 'SSR概率永久+1%' },
+    { id: 'crafter_1',   icon: '🔧', name: '合成新手',      desc: '合成第一个工具',     check: s => anyTool(s),                      reward: '随机R卡×3' },
+    { id: 'crafter_5',   icon: '⚒️', name: '工匠大师',      desc: '所有工具至少Lv.3',   check: s => TOOLS.every(t=>(s.tools[t.id]||0)>=3), reward: '随机SSR×1' },
+    { id: 'ssr_10',      icon: '🌟', name: '欧皇降世',      desc: '抽到SSR累计10次',   check: s => (s.ssrCount||0) >= 10,          reward: '🔥SSR×3' },
+    { id: 'max_tool',    icon: '🏅', name: '满级达人',      desc: '任意工具升到Lv.10',  check: s => Object.values(s.tools).some(l=>l>=10), reward: '🌟SSR×5' },
+    { id: 'shard_500',   icon: '💎', name: '碎片收藏家',    desc: '累计消耗500碎片',    check: s => (s.totalShardUsed||0) >= 500,    reward: '随机SSR×2' },
+    { id: 'multi_1000',  icon: '📦', name: '千抽达人',      desc: '抽卡1000次',        check: s => s.totalDraws >= 1000,           reward: '🌈SSR×3' },
+    { id: 'all_tools',   icon: '🏗️', name: '万能工匠',      desc: '合成全部20种工具',   check: s => TOOLS.every(t=>(s.tools[t.id]||0)>=1), reward: '🌀SSR×5' },
+];
+
+// ========================================================================
+//  STATE
+// ========================================================================
+
+function defaultState() {
+    return {
+        cards: {}, tools: {}, shards: 0, totalDraws: 0, ssrCount: 0,
+        totalShardUsed: 0, achieveClaimed: {}, pityCount: 0, ssrPityCount: 0,
+        autoDrawOn: false, permanentSSRBoost: 0,
     };
+}
+let state = defaultState();
+let _origRollRarity = null;
 
-    const MAX_LEVEL = 50;
+// ========================================================================
+//  HELPERS
+// ========================================================================
 
-    // ===== DOM 引用 =====
-    const countDisplay = document.getElementById('countDisplay');
-    const clickPowerDisplay = document.getElementById('clickPowerDisplay');
-    const clickTotalDisplay = document.getElementById('clickTotalDisplay');
-    const clickPerSecDisplay = document.getElementById('clickPerSecDisplay');
-    const clickBtn = document.getElementById('clickBtn');
-    const upgradeClickBtn = document.getElementById('upgradeClickBtn');
-    const upgradeAutoBtn = document.getElementById('upgradeAutoBtn');
-    const resetBtn = document.getElementById('resetBtn');
+function cntUnique(s) { return Object.keys(s.cards).filter(k=>s.cards[k]>0).length; }
+function cntTotal(s)  { return Object.values(s.cards).reduce((a,b)=>a+b,0); }
+function isSetComplete(s, r) { return CARDS[r].every(c=>(s.cards[c.emoji]||0)>0); }
+function anyTool(s)   { return Object.values(s.tools).some(l=>l>0); }
+function getShardValue(k) {
+    const r=getRarity(k);
+    return r==='N'?1: r==='R'?3: r==='SR'?8:20;
+}
+function formatNum(n) {
+    if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+    if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+    return Math.floor(n).toString();
+}
+function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
 
-    // ===== 工具函数 =====
-    function formatNum(n) {
-        if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-        if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-        return Math.floor(n).toString();
+// ========================================================================
+//  BONUS
+// ========================================================================
+
+function getBonus() {
+    const l = id => state.tools[id] || 0;
+    return {
+        extraCards: l('wand'),
+        ssrBoost: l('lens') + (state.permanentSSRBoost||0),
+        cdReduce: l('hourglass') * 0.05,
+        shardChance: l('scroll') * 10,
+        pityThreshold: Math.max(1, 11 - l('amulet')),
+        autoLevel: l('auto_draw'),
+        srBoost: l('precise') * 2,
+        magnet: l('magnet') * 5,
+        doubleChance: l('dice') * 5,
+        rainbowChance: l('rainbow') * 3,
+        shardMult: 1 + l('sieve') * 0.2,
+        recycleChance: l('recycle') * 5,
+        exchangeDiscount: l('alchemy'),
+        saveChance: l('copy') * 3,
+        passiveShards: l('tree'),
+        drawShards: l('star'),
+        ssrPityGap: Math.max(1, 30 - l('lucky_star') * 2),
+        resonateShards: l('resonate') * 20,
+        freeDraws: l('map') * 2,
+        milestoneShards: l('champion') * 10,
+    };
+}
+
+function getBaseCooldown() {
+    return Math.max(0.1, 0.5 - getBonus().cdReduce);
+}
+
+// ========================================================================
+//  DRAW
+// ========================================================================
+
+function rollRarity(bonus) {
+    const ssr = 3 + bonus.ssrBoost;
+    const sr  = 12 + bonus.srBoost;
+    const r   = 30;
+    const total = ssr + sr + r + 55;
+    const roll = Math.random() * total;
+    let cum = 0;
+    cum += ssr; if(roll<cum) return 'SSR';
+    cum += sr;  if(roll<cum) return 'SR';
+    cum += r;   if(roll<cum) return 'R';
+    return 'N';
+}
+_origRollRarity = rollRarity;
+
+function rollCard(rarity) { return pick(CARDS[rarity]).emoji; }
+
+function doSingleDraw(bonus) {
+    let rarity = rollRarity(bonus);
+    let cardKey = rollCard(rarity);
+    let decomposed = false;
+    let upgraded = false;
+
+    // 彩虹桥: N→R
+    if (rarity==='N' && bonus.rainbowChance>0 && Math.random()*100<bonus.rainbowChance) {
+        rarity = 'R'; cardKey = rollCard('R'); upgraded = true;
     }
 
-    // ===== 保存/加载 =====
-    function saveGame() {
-        localStorage.setItem('cliker_save', JSON.stringify(state));
+    // 潮汐卷轴: N自动分解
+    if (rarity==='N' && bonus.shardChance>0 && Math.random()*100<bonus.shardChance) {
+        state.shards += Math.floor(1 * bonus.shardMult);
+        decomposed = true; 
     }
 
-    function loadGame() {
-        try {
-            const raw = localStorage.getItem('cliker_save');
-            if (raw) {
-                const saved = JSON.parse(raw);
-                state = { ...state, ...saved };
+    // 星光收集: 每抽得碎片
+    if (bonus.drawShards > 0) state.shards += bonus.drawShards;
+
+    // 磁吸卡牌: 概率额外获得已有卡
+    if (bonus.magnet>0 && Math.random()*100<bonus.magnet) {
+        const owned = Object.keys(state.cards).filter(k=>state.cards[k]>0);
+        if (owned.length>0) {
+            const extra = pick(owned);
+            state.cards[extra] = (state.cards[extra]||0) + 1;
+        }
+    }
+
+    if (!decomposed) {
+        state.cards[cardKey] = (state.cards[cardKey]||0) + 1;
+    }
+    if (rarity==='SSR') state.ssrCount = (state.ssrCount||0) + 1;
+
+    return { cardKey, rarity, decomposed, upgraded };
+}
+
+function doDraw() {
+    const bonus = getBonus();
+    const total = 1 + bonus.extraCards;
+    const results = [];
+    let hasSRorAbove = false;
+
+    state.pityCount = (state.pityCount||0) + 1;
+    state.ssrPityCount = (state.ssrPityCount||0) + 1;
+
+    for (let i=0; i<total; i++) {
+        let guaranteed = false;
+        // 守护符保底 SR+
+        if (state.pityCount >= bonus.pityThreshold && !hasSRorAbove) {
+            const r2 = Math.random()<0.25 ? 'SSR' : 'SR';
+            const k2 = rollCard(r2);
+            state.cards[k2] = (state.cards[k2]||0) + 1;
+            if (r2==='SSR') state.ssrCount = (state.ssrCount||0) + 1;
+            results.push({ cardKey:k2, rarity:r2, decomposed:false, guaranteed:true });
+            hasSRorAbove = true; state.pityCount = 0;
+            continue;
+        }
+        // 幸运星保底 SSR
+        if (state.ssrPityCount >= bonus.ssrPityGap) {
+            const k3 = rollCard('SSR');
+            state.cards[k3] = (state.cards[k3]||0) + 1;
+            state.ssrCount = (state.ssrCount||0) + 1;
+            results.push({ cardKey:k3, rarity:'SSR', decomposed:false, guaranteed:true });
+            state.ssrPityCount = 0; state.pityCount = 0;
+            continue;
+        }
+        const r = doSingleDraw(bonus);
+        if (r.rarity==='SSR' || r.rarity==='SR') { hasSRorAbove = true; state.pityCount = 0; }
+        if (r.rarity==='SSR') { state.ssrPityCount = 0; }
+        results.push(r);
+    }
+
+    // 命运骰子: 概率翻倍
+    if (bonus.doubleChance>0 && Math.random()*100<bonus.doubleChance) {
+        const cloned = results.map(r=>({...r}));
+        results.push(...cloned);
+    }
+
+    state.totalDraws = (state.totalDraws||0) + results.length;
+
+    // 冠军徽章: 每100抽奖励
+    const prevHundred = Math.floor(((state.totalDraws||0)-results.length)/100);
+    const curHundred = Math.floor((state.totalDraws)/100);
+    if (curHundred > prevHundred && bonus.milestoneShards>0) {
+        state.shards += bonus.milestoneShards * (curHundred - prevHundred);
+    }
+
+    return results;
+}
+
+// ========================================================================
+//  AUTO-DRAW
+// ========================================================================
+
+let autoDrawTimer = null;
+let autoDrawPoll = null;
+
+function startAutoDraw() {
+    state.autoDrawOn = true;
+    autoDrawPoll = setInterval(() => {
+        if (!isOnCooldown) { startDraw(); }
+        // 更新按钮状态
+        updateAutoBtn();
+    }, 150);
+    saveGame();
+    updateAutoBtn();
+    showToast('🤖 自动抽卡已开启');
+}
+
+function stopAutoDraw() {
+    state.autoDrawOn = false;
+    if (autoDrawPoll) { clearInterval(autoDrawPoll); autoDrawPoll = null; }
+    saveGame();
+    updateAutoBtn();
+    showToast('🤖 自动抽卡已关闭');
+}
+
+function toggleAutoDraw() {
+    if (state.autoDrawOn) stopAutoDraw();
+    else startAutoDraw();
+}
+
+function updateAutoBtn() {
+    const btn = document.getElementById('autoDrawBtn');
+    if (!btn) return;
+    if ((state.tools.auto_draw||0) > 0) {
+        btn.style.display = 'inline-block';
+        btn.textContent = state.autoDrawOn ? '⏹ 停止' : `▶ 自动 (${getBonus().autoLevel})`;
+        btn.className = 'draw-action-btn' + (state.autoDrawOn ? ' active-auto' : '');
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+// ========================================================================
+//  CRAFT
+// ========================================================================
+
+function getToolCost(toolId, level) {
+    const tool = TOOLS.find(t=>t.id===toolId);
+    if (!tool) return null;
+    const cost = {};
+    for (const [emoji, base] of Object.entries(tool.recipe)) {
+        cost[emoji] = Math.ceil(base * Math.pow(TOOL_COST_MULT, level));
+    }
+    return cost;
+}
+
+function canUpgradeTool(toolId) {
+    const lvl = state.tools[toolId]||0;
+    if (lvl >= MAX_TOOL_LVL) return false;
+    const cost = getToolCost(toolId, lvl);
+    if (!cost) return false;
+    for (const [emoji, qty] of Object.entries(cost))
+        if ((state.cards[emoji]||0) < qty) return false;
+    return true;
+}
+
+function upgradeTool(toolId) {
+    const lvl = state.tools[toolId]||0;
+    if (lvl >= MAX_TOOL_LVL) return;
+    const cost = getToolCost(toolId, lvl);
+    if (!cost) return;
+    for (const [emoji, qty] of Object.entries(cost))
+        if ((state.cards[emoji]||0) < qty) return;
+
+    const bonus = getBonus();
+    // 复制之书: 概率不耗材
+    for (const [emoji, qty] of Object.entries(cost)) {
+        let actualQty = qty;
+        if (bonus.saveChance>0 && Math.random()*100<bonus.saveChance) actualQty = 0;
+        state.cards[emoji] = (state.cards[emoji]||0) - actualQty;
+        if (state.cards[emoji] <= 0) delete state.cards[emoji];
+    }
+    state.tools[toolId] = lvl + 1;
+    saveGame();
+    renderAll();
+
+    const tool = TOOLS.find(t=>t.id===toolId);
+    showToast(`🔧 ${tool.emoji} ${tool.name} → Lv.${lvl+1}！`);
+
+    // 冒险地图: 升级后免费抽
+    if (bonus.freeDraws > 0) {
+        const freeResults = [];
+        for (let i=0; i<bonus.freeDraws; i++) {
+            const r = doSingleDraw(getBonus());
+            freeResults.push(r);
+        }
+        state.totalDraws = (state.totalDraws||0) + freeResults.length;
+        saveGame();
+        renderAll();
+        showDrawModal(freeResults, `🗺️ 冒险奖励 ${freeResults.length} 张`);
+    }
+}
+
+// ========================================================================
+//  SHARDS
+// ========================================================================
+
+function decomposeCard(cardKey) {
+    if (!state.cards[cardKey] || state.cards[cardKey]<=0) return;
+    const bonus = getBonus();
+    const base = getShardValue(cardKey);
+    const gained = Math.floor(base * bonus.shardMult);
+    state.cards[cardKey]--;
+    if (state.cards[cardKey]<=0) delete state.cards[cardKey];
+    state.shards += gained;
+    // 转化炉: 概率返还
+    if (bonus.recycleChance>0 && Math.random()*100<bonus.recycleChance) {
+        state.cards[cardKey] = (state.cards[cardKey]||0) + 1;
+        showToast(`♻️ 转化炉返还了 ${CARD_MAP[cardKey].emoji}`);
+    }
+    saveGame(); renderAll();
+    showToast(`💎 +${gained} 碎片`);
+}
+
+function exchangeShard() {
+    const bonus = getBonus();
+    const cost = Math.max(10, 20 - (bonus.exchangeDiscount||0));
+    if (state.shards < cost) { showToast(`💎 碎片不足 ${cost}`); return; }
+    state.shards -= cost;
+    state.totalShardUsed = (state.totalShardUsed||0) + cost;
+    const card = pick(CARDS['R']);
+    state.cards[card.emoji] = (state.cards[card.emoji]||0) + 1;
+    saveGame(); renderAll();
+    showToast(`🎴 兑换到 ${card.emoji} ${card.name}（${cost}💎）`);
+}
+
+// ========================================================================
+//  ACHIEVEMENTS
+// ========================================================================
+
+function checkAchievements() {
+    for (const a of ACHIEVEMENTS) {
+        if (state.achieveClaimed[a.id]) continue;
+        if (a.check(state)) {
+            state.achieveClaimed[a.id] = true;
+            if (a.reward.includes('💎')) {
+                state.shards += parseInt(a.reward)||50;
+            } else if (a.reward.includes('R卡×3')) {
+                for(let i=0;i<3;i++){const c=pick(CARDS['R']);state.cards[c.emoji]=(state.cards[c.emoji]||0)+1;}
+            } else if (a.reward.includes('SSR')) {
+                const n = parseInt(a.reward.match(/×(\d)/)?.[1]||1);
+                for(let i=0;i<n;i++){const c=pick(CARDS['SSR']);state.cards[c.emoji]=(state.cards[c.emoji]||0)+1;}
+            } else if (a.reward.includes('SSR概率')) {
+                state.permanentSSRBoost = (state.permanentSSRBoost||0)+1;
             }
-        } catch (e) {
-            console.warn('读取存档失败', e);
+            saveGame(); renderAll();
+            setTimeout(()=>showToast(`🏆 成就: ${a.name}！奖励: ${a.reward}`),300);
         }
     }
+}
 
-    // ===== 更新 UI =====
-    function updateUI() {
-        countDisplay.textContent = formatNum(state.count);
-        clickPowerDisplay.textContent = state.clickPower;
-        clickTotalDisplay.textContent = state.clickCount;
-        clickPerSecDisplay.textContent = state.autoLevel;
+// ========================================================================
+//  SAVE / LOAD
+// ========================================================================
 
-        // 点击力升级
-        if (state.clickPower >= MAX_LEVEL) {
-            upgradeClickBtn.textContent = '已满级';
-            upgradeClickBtn.className = 'upgrade-btn maxed';
-            upgradeClickBtn.disabled = true;
+function saveGame() {
+    localStorage.setItem('cardgame2_save', JSON.stringify(state));
+}
+
+function loadGame() {
+    try {
+        const raw = localStorage.getItem('cardgame2_save');
+        if (raw) {
+            const s = JSON.parse(raw);
+            state = {...defaultState(), ...s};
+            state.cards = s.cards||{};
+            state.tools = s.tools||{};
+            state.achieveClaimed = s.achieveClaimed||{};
+        }
+    } catch(e) { console.warn('读档失败',e); }
+}
+
+// ========================================================================
+//  RENDER
+// ========================================================================
+
+let currentPage = 'draw';
+
+function renderAll() {
+    renderTop();
+    renderDrawInfo();
+    renderAlbum();
+    renderCraft();
+    renderAchievements();
+    updateAutoBtn();
+}
+
+function renderTop() {
+    document.getElementById('shardTop').textContent = formatNum(state.shards);
+    document.getElementById('cardTotalTop').textContent = formatNum(cntTotal(state));
+    document.getElementById('drawCountTop').textContent = formatNum(state.totalDraws);
+}
+
+function renderDrawInfo() {
+    const cd = getBaseCooldown();
+    document.getElementById('cooldownDisplay').textContent = cd.toFixed(2);
+    const b = getBonus();
+    let info = `冷却 ${cd.toFixed(2)}s`;
+    if (b.extraCards>0) info += ` · 每次${1+b.extraCards}张`;
+    if (b.drawShards>0) info += ` · 每抽+${b.drawShards}💎`;
+    document.getElementById('drawInfo').textContent = info;
+}
+
+// ---- Album ----
+function renderAlbum() {
+    const c = document.getElementById('albumContainer');
+    let h = '';
+    for (const r of RARITIES) {
+        const cards = CARDS[r];
+        const owned = cards.filter(c=>(state.cards[c.emoji]||0)>0).length;
+        h += `<div class="album-group">
+            <div class="album-group-title" style="color:${RARITY_COLORS[r]}">
+                ${r} · ${RARITY_LABEL[r]}
+                <span class="tag" style="background:${RARITY_COLORS[r]}22;color:${RARITY_COLORS[r]}">${owned}/${cards.length}</span>
+            </div>
+            <div class="album-grid">`;
+        for (const c2 of cards) {
+            const n = state.cards[c2.emoji]||0;
+            h += `<div class="album-card" data-rarity="${r}" data-emoji="${c2.emoji}">
+                <button class="decompose-btn" data-decompose="${c2.emoji}" title="分解">✕</button>
+                <div class="card-emoji">${c2.emoji}</div>
+                <div class="card-name">${c2.name}</div>
+                <div class="card-count">${n>0?'×'+n:'—'}</div>
+            </div>`;
+        }
+        h += `</div></div>`;
+    }
+    c.innerHTML = h;
+    c.querySelectorAll('[data-decompose]').forEach(btn=>{
+        btn.addEventListener('click',e=>{e.stopPropagation();decomposeCard(btn.dataset.decompose);});
+    });
+}
+
+// ---- Craft ----
+function renderCraft() {
+    document.getElementById('shardDisplay').textContent = formatNum(state.shards);
+    const bonus = getBonus();
+    const exchangeCost = Math.max(10, 20 - (bonus.exchangeDiscount||0));
+    document.getElementById('exchangeBtn').textContent = `${exchangeCost}💎→R卡`;
+
+    const c = document.getElementById('toolList');
+    let h = '';
+    for (const tool of TOOLS) {
+        const lvl = state.tools[tool.id]||0;
+        const maxed = lvl >= MAX_TOOL_LVL;
+        const canCraft = !maxed && canUpgradeTool(tool.id);
+        const cost = maxed ? null : getToolCost(tool.id, lvl);
+
+        h += `<div class="tool-item">
+            <div class="tool-header">
+                <div class="tool-icon">${tool.emoji}</div>
+                <div class="tool-meta">
+                    <div class="tool-name">${tool.name}</div>
+                    <div class="tool-level">Lv.${lvl}/${MAX_TOOL_LVL} · ${maxed?'已满级':tool.desc}</div>
+                    <div class="tool-effect">${lvl>0?tool.effect(lvl):'尚未激活'}</div>
+                </div>
+            </div>
+            <div class="tool-body">`;
+        if (!maxed) {
+            h += `<div class="tool-cost">材料：`;
+            for (const [emoji, qty] of Object.entries(cost)) {
+                const have = state.cards[emoji]||0;
+                const ok = have >= qty;
+                h += `<span class="cost-item"><span class="${ok?'enough':'lack'}">${emoji} ${have}/${qty}</span></span>`;
+            }
+            h += `</div><button class="tool-craft-btn" data-craft="${tool.id}" ${canCraft?'':'disabled'}>升级 Lv.${lvl+1}</button>`;
         } else {
-            upgradeClickBtn.textContent = formatNum(state.upgradeClickCost);
-            upgradeClickBtn.className = 'upgrade-btn';
-            upgradeClickBtn.disabled = state.count < state.upgradeClickCost;
+            h += `<button class="tool-craft-btn maxed" disabled>✅ 已满级</button>`;
         }
+        h += `</div></div>`;
+    }
+    c.innerHTML = h;
+    c.querySelectorAll('[data-craft]').forEach(btn=>{
+        btn.addEventListener('click',()=>upgradeTool(btn.dataset.craft));
+    });
+}
 
-        // 自动点击器升级
-        if (state.autoLevel >= MAX_LEVEL) {
-            upgradeAutoBtn.textContent = '已满级';
-            upgradeAutoBtn.className = 'upgrade-btn maxed';
-            upgradeAutoBtn.disabled = true;
+// ---- Achievements ----
+function renderAchievements() {
+    const c = document.getElementById('achieveList');
+    let h = '';
+    for (const a of ACHIEVEMENTS) {
+        const claimed = state.achieveClaimed[a.id];
+        const done = a.check(state);
+        let cls = 'locked', txt = '🔒 未达成';
+        if (claimed) { cls='done'; txt='✅ 已完成'; }
+        else if (done) { cls='claimable'; txt='🎁 领取'; }
+        h += `<div class="achieve-item">
+            <div class="achieve-icon">${a.icon}</div>
+            <div class="achieve-info">
+                <div class="achieve-name">${a.name}</div>
+                <div class="achieve-desc">${a.desc} · ${a.reward}</div>
+            </div>
+            <div class="achieve-state ${cls}">${txt}</div>
+        </div>`;
+    }
+    c.innerHTML = h;
+}
+
+// ========================================================================
+//  DRAW EXECUTION
+// ========================================================================
+
+let isOnCooldown = false;
+let drawTimer = null;
+
+function startDraw() {
+    if (isOnCooldown) return;
+    const cd = getBaseCooldown();
+    const results = doDraw();
+    checkAchievements();
+    saveGame();
+    renderAll();
+    showDrawModal(results);
+
+    isOnCooldown = true;
+    const btn = document.getElementById('drawBtn');
+    const overlay = document.getElementById('cooldownOverlay');
+    btn.disabled = true;
+    let remaining = cd;
+    overlay.textContent = remaining.toFixed(1)+'s';
+    drawTimer = setInterval(()=>{
+        remaining -= 0.1;
+        if (remaining<=0) {
+            clearInterval(drawTimer); drawTimer=null;
+            overlay.textContent=''; btn.disabled=false; isOnCooldown=false;
         } else {
-            upgradeAutoBtn.textContent = formatNum(state.upgradeAutoCost);
-            upgradeAutoBtn.className = 'upgrade-btn';
-            upgradeAutoBtn.disabled = state.count < state.upgradeAutoCost;
+            overlay.textContent=remaining.toFixed(1)+'s';
         }
+    },100);
+}
+
+function doMultiDraw() {
+    if (isOnCooldown) return;
+    const allResults = [];
+    for (let i=0; i<10; i++) {
+        const res = doDraw();
+        allResults.push(...res);
     }
+    checkAchievements();
+    saveGame();
+    renderAll();
 
-    // ===== 点击效果 =====
-    function spawnClickEffect(x, y, text) {
-        const el = document.createElement('div');
-        el.className = 'click-effect';
-        el.textContent = '+' + text;
-        el.style.left = (x - 15) + 'px';
-        el.style.top = (y - 10) + 'px';
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), 800);
-    }
+    const ssrCount = allResults.filter(r=>r.rarity==='SSR').length;
+    showDrawModal(allResults, `🎲 10连结果（${allResults.length}张，${ssrCount}张SSR）`);
 
-    // ===== 主要操作 =====
-    function doClick(e) {
-        state.count += state.clickPower;
-        state.clickCount++;
-
-        // 数字弹跳
-        countDisplay.classList.remove('count-bump');
-        void countDisplay.offsetWidth; // 强制回流以重启动画
-        countDisplay.classList.add('count-bump');
-
-        // 弹出特效
-        const rect = clickBtn.getBoundingClientRect();
-        spawnClickEffect(
-            rect.left + rect.width / 2,
-            rect.top,
-            state.clickPower
-        );
-
-        updateUI();
-        saveGame();
-    }
-
-    // ===== 升级逻辑 =====
-    function buyUpgradeClick() {
-        if (state.count < state.upgradeClickCost || state.clickPower >= MAX_LEVEL) return;
-        state.count -= state.upgradeClickCost;
-        state.clickPower++;
-        state.upgradeClickCost = Math.floor(10 * Math.pow(1.5, state.clickPower - 1));
-        updateUI();
-        saveGame();
-    }
-
-    function buyUpgradeAuto() {
-        if (state.count < state.upgradeAutoCost || state.autoLevel >= MAX_LEVEL) return;
-        state.count -= state.upgradeAutoCost;
-        state.autoLevel++;
-        state.upgradeAutoCost = Math.floor(50 * Math.pow(1.6, state.autoLevel - 1));
-        updateUI();
-        saveGame();
-    }
-
-    // ===== 重置 =====
-    function resetGame() {
-        if (!confirm('确定要重新开始吗？所有进度将丢失！')) return;
-        state = {
-            count: 0,
-            clickPower: 1,
-            autoLevel: 0,
-            clickCount: 0,
-            upgradeClickCost: 10,
-            upgradeAutoCost: 50,
-        };
-        updateUI();
-        saveGame();
-    }
-
-    // ===== 自动点击器循环 =====
-    function autoClickLoop() {
-        if (state.autoLevel > 0) {
-            state.count += state.autoLevel;
-            countDisplay.classList.remove('count-bump');
-            void countDisplay.offsetWidth;
-            countDisplay.classList.add('count-bump');
-            updateUI();
-            saveGame();
+    const cd = getBaseCooldown();
+    isOnCooldown = true;
+    const btn = document.getElementById('drawBtn');
+    const overlay = document.getElementById('cooldownOverlay');
+    btn.disabled = true;
+    let remaining = cd;
+    overlay.textContent = remaining.toFixed(1)+'s';
+    drawTimer = setInterval(()=>{
+        remaining -= 0.1;
+        if (remaining<=0) {
+            clearInterval(drawTimer); drawTimer=null;
+            overlay.textContent=''; btn.disabled=false; isOnCooldown=false;
+        } else {
+            overlay.textContent=remaining.toFixed(1)+'s';
         }
+    },100);
+}
+
+// ---- Modal ----
+function showDrawModal(results, title) {
+    const overlay = document.getElementById('modalOverlay');
+    document.getElementById('modalTitle').textContent = title || '🎉 抽卡结果';
+    const ssrN = results.filter(r=>r.rarity==='SSR').length;
+    const srN = results.filter(r=>r.rarity==='SR').length;
+    const dcN = results.filter(r=>r.decomposed).length;
+    let sub = `共${results.length}张 · SSR×${ssrN} · SR×${srN}`;
+    if (dcN>0) sub += ` · 💎分解×${dcN}`;
+    document.getElementById('modalSub').textContent = sub;
+    const container = document.getElementById('modalCards');
+    results.sort((a,b)=>RARITY_ORDER[b.rarity]-RARITY_ORDER[a.rarity]);
+    container.innerHTML = results.map((r,i)=>{
+        const extra = [];
+        if (r.decomposed) extra.push('data-decomposed');
+        if (r.guaranteed) extra.push('data-guaranteed');
+        const label = r.decomposed?'💎':r.rarity;
+        return `<div class="draw-card" data-rarity="${r.rarity}" style="animation-delay:${i*.03}s" ${extra.join(' ')}>
+            <span>${r.cardKey}</span>
+            <span class="rarity-tag">${r.upgraded?'⬆️':label}</span>
+        </div>`;
+    }).join('');
+    overlay.classList.add('open');
+}
+
+// ---- Toast ----
+let toastTimer = null;
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+// ========================================================================
+//  PASSIVE SHARDS (知识古树)
+// ========================================================================
+
+setInterval(() => {
+    const b = getBonus();
+    if (b.passiveShards > 0) {
+        state.shards += b.passiveShards;
+        saveGame(); renderTop(); renderCraft();
     }
+    // 共鸣水晶检查: 集齐N卡时奖励
+    if (b.resonateShards > 0 && isSetComplete(state, 'N')) {
+        // 只触发一次，存标记
+        if (!state._resonatePaid) {
+            state.shards += b.resonateShards;
+            state._resonatePaid = true;
+            saveGame(); renderAll();
+            showToast(`🎵 共鸣水晶！N卡全齐 +${b.resonateShards}💎`);
+        }
+    } else {
+        state._resonatePaid = false;
+    }
+}, 10000);
 
-    // ===== 绑定事件 =====
-    clickBtn.addEventListener('click', doClick);
-    upgradeClickBtn.addEventListener('click', buyUpgradeClick);
-    upgradeAutoBtn.addEventListener('click', buyUpgradeAuto);
-    resetBtn.addEventListener('click', resetGame);
+// ========================================================================
+//  INIT
+// ========================================================================
 
-    // 每秒触发自动点击器
-    setInterval(autoClickLoop, 1000);
-
-    // ===== 启动游戏 =====
+function init() {
     loadGame();
-    updateUI();
-</script>
 
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab=>{
+        tab.addEventListener('click',()=>{
+            document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+            tab.classList.add('active');
+            currentPage = tab.dataset.page;
+            document.getElementById('page-'+currentPage).classList.add('active');
+            // 切换到其他页时自动停止自动抽卡
+            if (currentPage !== 'draw' && state.autoDrawOn) {
+                stopAutoDraw();
+            }
+        });
+    });
+
+    document.getElementById('drawBtn').addEventListener('click', startDraw);
+    document.getElementById('multiDrawBtn').addEventListener('click', doMultiDraw);
+    document.getElementById('autoDrawBtn').addEventListener('click', toggleAutoDraw);
+    document.getElementById('exchangeBtn').addEventListener('click', exchangeShard);
+    document.getElementById('modalClose').addEventListener('click', ()=>{
+        document.getElementById('modalOverlay').classList.remove('open');
+    });
+    document.getElementById('modalOverlay').addEventListener('click', e=>{
+        if (e.target===e.currentTarget) document.getElementById('modalOverlay').classList.remove('open');
+    });
+
+    renderAll();
+    // 自动恢复自动抽卡（如果之前开着）
+    if (state.autoDrawOn) startAutoDraw();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
