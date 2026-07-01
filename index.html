@@ -7,25 +7,26 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg: #0a0d1a;
-            --panel: rgba(255,255,255,0.04);
-            --border: rgba(255,255,255,0.08);
-            --text: #e8e8f0;
-            --text-dim: rgba(255,255,255,0.4);
-            --accent: #f7c948;
-            --n-color: #8fafc0;
-            --r-color: #5bc77e;
-            --sr-color: #a078e0;
-            --ssr-color: #f0a030;
-            --shard-color: #7dd3fc;
-            --auto-color: #ff6b9d;
+            --bg: #f0f2f5;
+            --panel: rgba(255,255,255,0.9);
+            --border: rgba(0,0,0,0.1);
+            --text: #1a1a2e;
+            --text-dim: rgba(0,0,0,0.45);
+            --accent: #d4880f;
+            --n-color: #4a8ba6;
+            --r-color: #3a9d5a;
+            --sr-color: #7a4fc0;
+            --ssr-color: #c07820;
+            --shard-color: #3a8fc0;
+            --auto-color: #d44068;
+            --modal-bg: #ffffff;
         }
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
             background-image:
-                radial-gradient(ellipse 600px 400px at 20% 50%, rgba(120,80,220,0.06) 0%, transparent 100%),
-                radial-gradient(ellipse 500px 400px at 80% 30%, rgba(247,201,72,0.04) 0%, transparent 100%);
+                radial-gradient(ellipse 500px 400px at 20% 50%, rgba(74,139,166,0.06) 0%, transparent 100%),
+                radial-gradient(ellipse 500px 400px at 80% 30%, rgba(212,136,15,0.05) 0%, transparent 100%);
             color: var(--text);
             min-height: 100vh;
             display: flex;
@@ -39,11 +40,10 @@
             max-height: calc(100vh - 40px);
             display: flex;
             flex-direction: column;
-            background: rgba(10,13,26,0.85);
-            backdrop-filter: blur(20px);
+            background: #ffffff;
             border-radius: 24px;
             border: 1px solid var(--border);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.08);
             overflow: hidden;
         }
 
@@ -73,7 +73,7 @@
         /* Content */
         .content { flex: 1; overflow-y: auto; padding: 24px; }
         .content::-webkit-scrollbar { width: 6px; }
-        .content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
         .page { display: none; }
         .page.active { display: block; }
 
@@ -81,23 +81,23 @@
         .draw-area { display: flex; flex-direction: column; align-items: center; padding: 20px 0 16px; }
         .draw-btn {
             width: 200px; height: 200px; border-radius: 50%;
-            border: 4px solid rgba(247,201,72,0.25);
-            background: radial-gradient(circle at 35% 30%, #2a2540, #141824);
+            border: 4px solid rgba(212,136,15,0.3);
+            background: radial-gradient(circle at 35% 30%, #fef3d6, #fff4e0);
             cursor: pointer; font-size: 80px;
             transition: transform 0.08s, box-shadow 0.2s;
-            box-shadow: 0 0 50px rgba(247,201,72,0.08), inset 0 0 50px rgba(247,201,72,0.03);
-            user-select: none; color: #fff; position: relative;
+            box-shadow: 0 4px 20px rgba(212,136,15,0.1);
+            user-select: none; color: #1a1a2e; position: relative;
         }
         .draw-btn:not(:disabled):hover {
-            box-shadow: 0 0 80px rgba(247,201,72,0.18), inset 0 0 50px rgba(247,201,72,0.06);
-            border-color: rgba(247,201,72,0.4);
+            box-shadow: 0 4px 30px rgba(212,136,15,0.2);
+            border-color: rgba(212,136,15,0.5);
         }
         .draw-btn:not(:disabled):active { transform: scale(0.93); }
         .draw-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .draw-btn .cooldown-overlay {
             position: absolute; inset: 0; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.6); font-size: 24px; font-weight: 700;
+            background: rgba(255,255,255,0.75); font-size: 24px; font-weight: 700; color: var(--text);
             opacity: 0; transition: opacity 0.2s;
         }
         .draw-btn:disabled .cooldown-overlay { opacity: 1; }
@@ -121,6 +121,7 @@
             margin-top: 16px; min-height: 80px;
             display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center;
             padding: 14px; background: var(--panel); border-radius: 16px; border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
         .draw-result.empty { color: var(--text-dim); font-size: 14px; }
         .draw-card {
@@ -163,6 +164,7 @@
             background: var(--panel); border-radius: 10px; border: 1px solid var(--border);
             padding: 8px 4px 6px; text-align: center; cursor: pointer;
             transition: background 0.15s, transform 0.15s; position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
         .album-card:hover { background: rgba(255,255,255,0.07); transform: translateY(-2px); }
         .album-card .card-emoji { font-size: 28px; line-height: 1.2; }
@@ -186,6 +188,7 @@
             display: flex; align-items: center; gap: 10px;
             padding: 12px 16px; background: var(--panel); border-radius: 14px;
             border: 1px solid var(--border); margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
         .shard-bar .shard-icon { font-size: 20px; }
         .shard-bar .shard-count { font-weight: 700; font-size: 18px; color: var(--shard-color); }
@@ -200,7 +203,7 @@
         .tool-list { display: flex; flex-direction: column; gap: 10px; }
         .tool-item {
             background: var(--panel); border-radius: 14px; border: 1px solid var(--border);
-            padding: 14px 16px;
+            padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
         .tool-header { display: flex; align-items: center; gap: 12px; }
         .tool-icon { font-size: 28px; }
@@ -227,7 +230,7 @@
         .achieve-item {
             display: flex; align-items: center; gap: 12px;
             background: var(--panel); border-radius: 12px; border: 1px solid var(--border);
-            padding: 12px 16px;
+            padding: 12px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
         }
         .achieve-icon { font-size: 26px; }
         .achieve-info { flex: 1; min-width: 0; }
@@ -248,6 +251,7 @@
             display: flex; justify-content: space-between; align-items: center;
             background: var(--panel); border-radius: 10px; border: 1px solid var(--border);
             padding: 12px 16px; margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
         .settings-row .label { font-size: 13px; display: flex; align-items: center; gap: 8px; }
         .settings-row .label .sub { font-size: 11px; color: var(--text-dim); }
@@ -263,20 +267,20 @@
         /* Achievement Popup */
         .achieve-popup {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #1a1d2e, #2a1a3e);
+            background: linear-gradient(135deg, #ffffff, #fef7e8);
             border: 2px solid var(--accent); border-radius: 20px;
             padding: 32px 28px 24px; text-align: center;
-            z-index: 1001; box-shadow: 0 0 60px rgba(247,201,72,0.2);
+            z-index: 1001; box-shadow: 0 0 60px rgba(212,136,15,0.15);
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             max-width: 340px; width: 90%;
         }
         .achieve-popup .big-icon { font-size: 56px; margin-bottom: 8px; }
-        .achieve-popup .title { font-size: 22px; font-weight: 700; margin-bottom: 4px; background: linear-gradient(90deg, #f7971e, #ffd200); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .achieve-popup .title { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: var(--accent); }
         .achieve-popup .sub { font-size: 14px; color: var(--text-dim); margin-bottom: 4px; }
         .achieve-popup .reward { font-size: 16px; color: var(--accent); font-weight: 600; margin-bottom: 16px; }
         .achieve-popup .close-btn {
             padding: 8px 28px; border-radius: 20px; border: none;
-            background: var(--accent); color: #1a1d2e; font-size: 14px;
+            background: var(--accent); color: #fff; font-size: 14px;
             font-weight: 600; cursor: pointer;
         }
         .achieve-popup .close-btn:hover { opacity: 0.9; }
@@ -310,9 +314,10 @@
         }
         .modal-overlay.open { display: flex; }
         .modal {
-            background: #1a1d2e; border: 1px solid var(--border); border-radius: 20px;
+            background: var(--modal-bg); border: 1px solid var(--border); border-radius: 20px;
             padding: 28px; max-width: 420px; width: 90%; text-align: center;
             animation: modalIn 0.25s ease-out; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
         }
         @keyframes modalIn {
             0% { opacity: 0; transform: scale(0.9) translateY(20px); }
@@ -343,8 +348,8 @@
 
         /* Mobile: shrink everything */
         @media (max-width: 540px) {
-            body { padding: 0; align-items: stretch; }
-            .app { max-width: 100%; max-height: none; border-radius: 0; border: none; box-shadow: none; backdrop-filter: none; }
+            body { padding: 0; align-items: stretch; background: #ffffff; }
+            .app { max-width: 100%; max-height: none; border-radius: 0; border: none; box-shadow: none; }
             .top-bar { padding: 12px 14px; }
             .top-bar .title { font-size: 16px; }
             .top-bar .stats { gap: 6px; font-size: 11px; }
@@ -536,47 +541,55 @@ function getRarity(k) { return CARD_MAP[k].rarity; }
 function getCardName(k) { return CARD_MAP[k].name; }
 
 // ---- Tools (20) ----
+// 低等级配方使用常见N卡，中高等级逐步引入稀有卡
 const TOOLS = [
+    // === 组1: 纯N卡配方 (新手友好) ===
     { id: 'wand',       emoji: '🪄',  name: '魔法棒',     desc: '抽卡额外张数',
-      effect: l => `+${l} 张`,        recipe: { '🐱':3,'🐶':3,'🦄':1 } },
+      effect: l => `+${l} 张`,        recipe: { '🐱':3,'🐶':3,'🐰':2 } },
     { id: 'lens',       emoji: '🔍',  name: '幸运透镜',   desc: 'SSR概率提升',
-      effect: l => `SSR +${l}%`,      recipe: { '🐰':3,'🐸':3,'🦅':1 } },
+      effect: l => `SSR +${l}%`,      recipe: { '🐸':3,'🐵':3,'🐷':2 } },
     { id: 'hourglass',  emoji: '⏳',  name: '时光沙漏',   desc: '缩短冷却',
-      effect: l => `-${(l*.05).toFixed(2)}s`, recipe: { '🦊':3,'🐵':3,'🐉':1 } },
+      effect: l => `-${(l*.05).toFixed(2)}s`, recipe: { '🦊':3,'🐼':3,'🐣':2 } },
     { id: 'scroll',     emoji: '🌊',  name: '潮汐卷轴',   desc: 'N卡自动分解',
-      effect: l => `${l*10}%分解`,    recipe: { '🐳':3,'🐊':3,'👑':1 } },
+      effect: l => `${l*10}%分解`,    recipe: { '🐳':3,'🐊':3,'🦚':2 } },
     { id: 'amulet',     emoji: '🛡️', name: '守护符',     desc: '保底SR以上',
-      effect: l => `每${Math.max(1,11-l)}抽`, recipe: { '🐧':3,'🐝':3,'🦸':1 } },
+      effect: l => `每${Math.max(1,11-l)}抽`, recipe: { '🐧':3,'🐝':3,'🐫':2 } },
+
+    // === 组2: N卡 + R卡 ===
     { id: 'auto_draw',  emoji: '🤖',  name: '自动抽卡器', desc: '自动连续抽卡',
-      effect: l => `间隔 ×${(Math.pow(.8,l)).toFixed(2)}`, recipe: { '🐷':3,'🐣':3,'🦁':1 } },
+      effect: l => `间隔 ×${(Math.pow(.8,l)).toFixed(2)}`, recipe: { '🐿️':3,'🦥':3,'🦄':1 } },
     { id: 'precise',    emoji: '🎯',  name: '精准之眼',   desc: 'SR以上概率提升',
-      effect: l => `SR+ +${l*2}%`,   recipe: { '🐼':3,'🐢':3,'🐆':1 } },
+      effect: l => `SR+ +${l*2}%`,   recipe: { '🦦':3,'🦔':3,'🦅':1 } },
     { id: 'magnet',     emoji: '🧲',  name: '磁吸卡牌',   desc: '概率额外获得已有卡',
-      effect: l => `${l*5}%触发`,    recipe: { '🐬':3,'🐿️':3,'🦜':1 } },
+      effect: l => `${l*5}%触发`,    recipe: { '🐌':3,'🐞':3,'🐉':1 } },
     { id: 'dice',       emoji: '🎲',  name: '命运骰子',   desc: '抽卡结果概率翻倍',
-      effect: l => `${l*5}%翻倍`,    recipe: { '🦥':3,'🦦':3,'🦩':1 } },
+      effect: l => `${l*5}%翻倍`,    recipe: { '🦋':3,'🦀':3,'🦜':1 } },
     { id: 'rainbow',    emoji: '🌈',  name: '彩虹桥',     desc: 'N卡概率升级为R',
-      effect: l => `${l*3}%升级`,    recipe: { '🦔':3,'🐌':3,'🦌':1 } },
+      effect: l => `${l*3}%升级`,    recipe: { '🦗':3,'🦢':3,'🦩':1 } },
+
+    // === 组3: N卡 + SR卡 ===
     { id: 'sieve',      emoji: '💎',  name: '钻石筛',     desc: '碎片获取量增加',
-      effect: l => `+${l*20}%碎片`,  recipe: { '🦚':3,'🐫':3,'🌟':1 } },
+      effect: l => `+${l*20}%碎片`,  recipe: { '🦏':3,'🦣':3,'🧙':1 } },
     { id: 'recycle',    emoji: '♻️',  name: '转化炉',     desc: '分解概率返还卡牌',
-      effect: l => `${l*5}%返还`,    recipe: { '🐘':3,'🦎':3,'🐺':1 } },
+      effect: l => `${l*5}%返还`,    recipe: { '🐻':3,'🐨':3,'🧝':1 } },
     { id: 'alchemy',    emoji: '🔬',  name: '炼金术',     desc: '碎片兑换消耗减少',
-      effect: l => `-${l}💎`,        recipe: { '🐞':3,'🦋':3,'🧝':1 } },
+      effect: l => `-${l}💎`,        recipe: { '🦉':3,'🐀':3,'🦸':1 } },
     { id: 'copy',       emoji: '📦',  name: '复制之书',   desc: '合成概率不耗材',
-      effect: l => `${l*3}%省材`,    recipe: { '🐜':3,'🦀':3,'🧛':1 } },
+      effect: l => `${l*3}%省材`,    recipe: { '🐈':3,'🐕':3,'🧛':1 } },
     { id: 'tree',       emoji: '🌱',  name: '知识古树',   desc: '每10秒自动得碎片',
-      effect: l => `+${l}💎/10s`,    recipe: { '🦗':3,'🦢':3,'💎':1 } },
+      effect: l => `+${l}💎/10s`,    recipe: { '🐘':3,'🦎':3,'🦹':1 } },
+
+    // === 组4: N卡 + SSR卡 ===
     { id: 'star',       emoji: '⭐',  name: '星光收集',   desc: '每次抽卡得碎片',
-      effect: l => `+${l}💎/抽`,     recipe: { '🦏':3,'🦣':3,'🧚':1 } },
+      effect: l => `+${l}💎/抽`,     recipe: { '🐢':3,'🐙':3,'👑':1 } },
     { id: 'lucky_star', emoji: '💫',  name: '幸运星',     desc: '保底SSR',
-      effect: l => `每${30-l*2}抽保底SSR`, recipe: { '🐻':3,'🐨':3,'🏹':1 } },
+      effect: l => `每${30-l*2}抽保底SSR`, recipe: { '🐬':3,'🦭':1,'🌟':1 } },
     { id: 'resonate',   emoji: '🎵',  name: '共鸣水晶',   desc: '集齐全套N卡奖励',
-      effect: l => `+${l*20}💎`,     recipe: { '🦉':3,'🐀':3,'⚔️':1 } },
+      effect: l => `+${l*20}💎`,     recipe: { '🦁':2,'🐆':2,'🔥':1 } },
     { id: 'map',        emoji: '🗺️',  name: '冒险地图',   desc: '升级工具后免费抽卡',
-      effect: l => `免费${l*2}张`,   recipe: { '🐈':3,'🐕':3,'🛡️':1 } },
+      effect: l => `免费${l*2}张`,   recipe: { '🐅':2,'🦌':2,'💎':1 } },
     { id: 'champion',   emoji: '🏆',  name: '冠军徽章',   desc: '每100抽奖励碎片',
-      effect: l => `+${l*10}💎/百抽`, recipe: { '🐣':3,'🦋':3,'❄️':1 } },
+      effect: l => `+${l*10}💎/百抽`, recipe: { '🐺':2,'🦒':2,'🌈':1 } },
 ];
 const MAX_TOOL_LVL = 10;
 const TOOL_COST_MULT = 1.6;
@@ -667,10 +680,11 @@ function getBaseCooldown() {
 // ========================================================================
 
 function rollRarity(bonus) {
-    const ssr = 3 + bonus.ssrBoost;
-    const sr  = 12 + bonus.srBoost;
-    const r   = 30;
-    const total = ssr + sr + r + 55;
+    // 基础概率: N=65%, R=24%, SR=9%, SSR=2%
+    const ssr = 2 + bonus.ssrBoost;
+    const sr  = 9 + bonus.srBoost;
+    const r   = 24;
+    const total = ssr + sr + r + 65;
     const roll = Math.random() * total;
     let cum = 0;
     cum += ssr; if(roll<cum) return 'SSR';
